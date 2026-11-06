@@ -1,9 +1,15 @@
+
 import json
 import requests
 
 
 def emotion_detector(text_to_analyze):
-    url = "https://sn-watson-emotion.labs.skills.network/v1/watson.runtime.nlp.v1/NlpService/EmotionPredict"
+    """Analyze text and return emotion scores."""
+
+    url = (
+        "https://sn-watson-emotion.labs.skills.network/"
+        "v1/watson.runtime.nlp.v1/NlpService/EmotionPredict"
+    )
 
     headers = {
         "grpc-metadata-mm-model-id":
@@ -22,26 +28,44 @@ def emotion_detector(text_to_analyze):
         headers=headers
     )
 
+    if response.status_code == 400:
+        return {
+            "anger": None,
+            "disgust": None,
+            "fear": None,
+            "joy": None,
+            "sadness": None,
+            "dominant_emotion": None
+        }
+
     formatted_response = json.loads(response.text)
+
+    if not formatted_response.get("emotionPredictions"):
+        return {
+            "anger": None,
+            "disgust": None,
+            "fear": None,
+            "joy": None,
+            "sadness": None,
+            "dominant_emotion": None
+        }
 
     emotions = formatted_response["emotionPredictions"][0]["emotion"]
 
-    anger_score = emotions["anger"]
-    disgust_score = emotions["disgust"]
-    fear_score = emotions["fear"]
-    joy_score = emotions["joy"]
-    sadness_score = emotions["sadness"]
-
     emotion_scores = {
-        "anger": anger_score,
-        "disgust": disgust_score,
-        "fear": fear_score,
-        "joy": joy_score,
-        "sadness": sadness_score
+        "anger": emotions["anger"],
+        "disgust": emotions["disgust"],
+        "fear": emotions["fear"],
+        "joy": emotions["joy"],
+        "sadness": emotions["sadness"]
     }
 
-    dominant_emotion = max(emotion_scores, key=emotion_scores.get)
+    dominant_emotion = max(
+        emotion_scores,
+        key=emotion_scores.get
+    )
 
     emotion_scores["dominant_emotion"] = dominant_emotion
 
     return emotion_scores
+
